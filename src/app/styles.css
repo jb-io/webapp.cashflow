@@ -156,6 +156,11 @@ p { margin: 0; }
   .sidebar a.active { background: var(--accent-soft); color: var(--accent); }
   .sidebar a svg { width: 19px; height: 19px; flex: none; }
   .sidebar .sidebar-foot { margin-top: auto; padding: 10px; }
+  /* Der Quelltext-Verweis ist kein Navigationspunkt und soll auch nicht so
+     aussehen — `.sidebar a svg` wäre sonst spezifischer als `.repo-link svg`. */
+  .sidebar a.repo-link { padding: 0; gap: 7px; font-size: 12px; font-weight: 450; }
+  .sidebar a.repo-link:hover { background: none; color: var(--accent); }
+  .sidebar a.repo-link svg { width: 14px; height: 14px; }
 
   .topbar { display: none; }
   .tabbar { display: none; }
@@ -163,6 +168,17 @@ p { margin: 0; }
   .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .content { padding: 26px 30px 40px; gap: 20px; max-width: 1240px; width: 100%; }
 }
+
+/* Verweis auf den Quelltext: zurückhaltend, erst beim Überfahren deutlich. */
+.repo-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 10px; font-size: 12px; text-decoration: none;
+  color: var(--text-faint);
+}
+.repo-link:hover { color: var(--accent); }
+.repo-link svg { width: 15px; height: 15px; flex: none; }
+.repo-link.icon-only { margin-top: 0; padding: 4px; }
+.repo-link.icon-only svg { width: 19px; height: 19px; }
 
 .page-head { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
 .page-head .spacer { flex: 1; }

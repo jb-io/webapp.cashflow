@@ -3,7 +3,7 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 
 import { useStore } from './state/StateProvider.tsx';
 import { money } from './format.ts';
-import { IconChart, IconList, IconTags, IconWallet } from './components/Icons.tsx';
+import { IconChart, IconGitHub, IconList, IconTags, IconWallet } from './components/Icons.tsx';
 import WelcomeDialog from './components/WelcomeDialog.tsx';
 
 import ForecastPage from './pages/ForecastPage.tsx';
@@ -13,6 +13,9 @@ import AccountPage from './pages/AccountPage.tsx';
 
 /** Hash-Routen: #/verlauf, #/buchungen, #/kategorien, #/konto */
 interface NavItem { to: string; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>>; }
+
+/** Quelltext — bewusst dezent, aber auf beiden Größen erreichbar. */
+const REPO_URL = 'https://github.com/jb-io/webapp.cashflow';
 
 const NAV: NavItem[] = [
   { to: '/verlauf', label: 'Verlauf', Icon: IconChart },
@@ -36,6 +39,9 @@ export default function App() {
         <div className="sidebar-foot">
           <div className="tiny muted truncate">{doc.account.name}</div>
           <div className="small num">Start {money(doc.account.startBalance)}</div>
+          <a className="repo-link" href={REPO_URL} target="_blank" rel="noreferrer">
+            <IconGitHub /> Quelltext auf GitHub
+          </a>
         </div>
       </nav>
 
@@ -44,6 +50,10 @@ export default function App() {
           <span className="brand">cashflow</span>
           <span className="spacer" />
           <span className="small muted num truncate">{doc.account.name}</span>
+          <a className="repo-link icon-only" href={REPO_URL} target="_blank" rel="noreferrer"
+            title="Quelltext auf GitHub" aria-label="Quelltext auf GitHub">
+            <IconGitHub />
+          </a>
         </header>
 
         <Routes>
