@@ -125,3 +125,99 @@ dialog.welcome { max-width: 520px; }
 }
 .welcome-option:hover { background: #eef2f7; border-color: var(--accent); }
 .welcome-option strong { font-size: 15px; }
+
+/* ---------------------------------------------------- Token-Liste (Buchungen) */
+.entry-list { display: flex; flex-direction: column; }
+
+.entry-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) 130px minmax(170px, 1.4fr) minmax(140px, 1fr) 84px;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  outline: none;
+}
+.entry-row:hover { background: #f3f6fa; }
+.entry-row.selected { background: #eef3fa; border-color: #c7d7ea; }
+.entry-row:focus-visible { border-color: var(--accent); }
+.entry-row.inactive .tok { opacity: .45; text-decoration: line-through; }
+
+/* Tokens sehen aus wie Text und verhalten sich wie Schaltflächen */
+.tok {
+  font: inherit; color: inherit; text-align: left;
+  background: none; border: 1px solid transparent; border-radius: 4px;
+  padding: 3px 5px; cursor: pointer; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tok:hover { border-color: var(--border); background: #fff; }
+.tok:focus-visible { border-color: var(--accent); background: #fff; }
+.tok.tok-open { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 2px rgba(58, 110, 165, .15); }
+.entry-row.selected .tok { border-color: #dde5ef; }
+
+.tok-name { font-weight: 600; }
+.tok-amount { text-align: right; font-variant-numeric: tabular-nums; }
+.tok-badge { font-size: 10px; color: var(--muted); margin-left: 2px; }
+.tok-sub { color: var(--muted); }
+.tok-empty { color: var(--muted); font-style: italic; }
+.tok-category .dot { margin-right: 6px; }
+
+.tok-input {
+  font: inherit; font-weight: 600; padding: 2px 4px;
+  border: 1px solid var(--accent); border-radius: 4px; width: 100%;
+}
+
+.row-actions { display: flex; gap: 2px; justify-content: flex-end; visibility: hidden; }
+.entry-row:hover .row-actions,
+.entry-row.selected .row-actions,
+.entry-row:focus-within .row-actions { visibility: visible; }
+
+button.icon {
+  font: inherit; line-height: 1; background: none; border: none; color: var(--muted);
+  cursor: pointer; padding: 4px 5px; border-radius: 4px;
+}
+button.icon:hover { background: #e4ebf3; color: var(--text); }
+
+.entry-meta {
+  grid-column: 1 / -1;
+  font-size: 12px; color: var(--muted); padding: 0 5px 3px;
+}
+
+/* ----------------------------------------------------------------- Popover */
+.popover {
+  position: fixed; z-index: 50; min-width: 240px; max-width: min(420px, calc(100vw - 16px));
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(20, 30, 45, .18);
+  padding: 12px;
+}
+.pop-head { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.pop-head:not(:first-child) { margin-top: 12px; }
+
+.segmented { display: flex; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.segmented.wrap { flex-wrap: wrap; border: none; gap: 4px; }
+.segmented button {
+  font: inherit; flex: 1; padding: 5px 8px; cursor: pointer;
+  background: #fff; border: none; border-right: 1px solid var(--border); white-space: nowrap;
+}
+.segmented.wrap button { border: 1px solid var(--border); border-radius: 5px; flex: 0 0 auto; }
+.segmented button:last-child { border-right: none; }
+.segmented button:hover { background: #eef2f7; }
+.segmented button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.pop-fields { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.pop-field { display: inline-flex; align-items: center; gap: 5px; margin: 0; color: inherit; font-size: 13px; }
+.pop-rows { margin-top: 8px; }
+.pop-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.pop-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.num-input { width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
+.num-input.small { width: 56px; }
+
+.pop-list { display: flex; flex-direction: column; max-height: 260px; overflow: auto; }
+.pop-list button {
+  font: inherit; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 5px 10px; border-radius: 4px; display: flex; align-items: center;
+}
+.pop-list button:hover { background: #eef2f7; }
+.pop-list button.on { background: var(--accent); color: #fff; }
+.pop-list .dot { margin-right: 7px; }

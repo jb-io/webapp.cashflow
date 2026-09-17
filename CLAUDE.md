@@ -88,13 +88,22 @@ später, muss sein Startsaldo die Buchungen davor enthalten.
 | `replaceState()` | ja | ja — kompletter neuer Datenstand |
 | `resetState()` | nein, löscht | ja + Startdialog |
 
-**`updateInline()` darf nicht rendern (A16).** Das `change` einer Tabellenzelle
-wird durch den Klick in die *nächste* Zelle ausgelöst; ein Vollrender tauscht
-die Tabelle mitten im Klick aus, der Klick landet dann im Nichts oder in einer
-Nachbarzeile, und die Eingabe geht in die falsche Zeile. Sichten mit
-Inline-Bearbeitung ziehen ihre abgeleiteten Zellen stattdessen selbst nach
-(`patchRow` in `entriesTab.js`). Aus demselben Grund greifen Inline-Felder auf
-`change`, nicht auf `input`.
+**`updateInline()` darf nicht rendern (A16).** Das `change` eines Feldes in der
+Liste wird durch den Klick auf das *nächste* Element ausgelöst; ein Vollrender
+tauscht die Liste mitten im Klick aus, der Klick landet dann im Nichts oder in
+einer Nachbarzeile, und die Eingabe geht in die falsche Zeile. Betroffen ist
+nur noch das Umbenennen an Ort und Stelle — alle anderen Editoren der
+Buchungsliste sind Popovers am `<body>` (A20), weshalb die Liste dort frei neu
+rendern darf. Wer ein neues Eingabefeld *in* eine Liste setzt, handelt sich das
+Problem wieder ein.
+
+**Die Buchungsliste ist eine Token-Liste**, keine Formulartabelle: Textzeile im
+festen Raster, jede Angabe ein `<button class="tok">`, dessen Klick über
+`popover.js` einen Editor für genau diesen Aspekt öffnet. Das Popover findet
+seinen Anker nach einem Neurender über einen Selektor wieder — deshalb ruft
+`render()` in `app.js` am Ende `repositionPopover()`. Popover-Inhalte bauen
+sich nur bei strukturellen Wechseln neu auf (`api.rebuild()`), nie bei jeder
+Wertänderung, sonst verliert das Feld den Fokus.
 
 `render()` zeichnet nur den aktiven Tab — andere Tabs sind nach einer Änderung
 ohne Render nicht veraltet, weil sie beim Umschalten neu gebaut werden.

@@ -14,6 +14,7 @@ import { renderEntriesTab } from './components/entriesTab.js';
 import { renderCategoriesTab } from './components/categoriesTab.js';
 import { renderAccountTab } from './components/accountTab.js';
 import { openWelcomeDialog } from './components/welcome.js';
+import { repositionPopover } from './components/popover.js';
 
 const TABS = {
   forecast: renderForecastTab,
@@ -121,6 +122,10 @@ function render() {
   for (const button of document.querySelectorAll('nav button')) {
     button.classList.toggle('active', button.dataset.tab === activeTab);
   }
+
+  // Ein offenes Token-Popover hängt am <body> und überlebt das Neurendern;
+  // sein Anker ist danach ein neues Element und muss neu gesucht werden.
+  repositionPopover();
 }
 
 document.querySelector('nav').addEventListener('click', (event) => {

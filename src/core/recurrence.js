@@ -16,6 +16,8 @@ import {
 const MAX_OCCURRENCES = 20000;
 
 const WEEKDAY_NAMES = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+const WEEKDAY_SHORT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const MONTH_SHORT = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const MONTH_NAMES = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
   'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
@@ -168,40 +170,80 @@ function everyNDays(rule, begin, end, startDate) {
   return out;
 }
 
-/** Menschenlesbare Beschreibung einer Regel, z.B. "monatlich am 1., außer Dezember". */
-export function describeRule(rule) {
+/**
+ * Zerlegt eine Regel in beschreibende Bausteine. Die Listenansicht zeigt
+ * Rhythmus und Ausnahmen getrennt und in Kurzform, Fließtext braucht beides
+ * zusammengesetzt — deshalb eine Quelle für beide Formen.
+ *
+ * @returns {{rhythm: string, rhythmShort: string, exceptions: string, exceptionsShort: string}}
+ */
+export function describeRuleParts(rule) {
   const day = (d) => (d === -1 ? 'am Monatsletzten' : `am ${d}.`);
-  let text;
+  const dayShort = (d) => (d === -1 ? 'am Letzten' : `am ${d}.`);
+  let rhythm;
+  let rhythmShort;
+
   switch (rule.type) {
     case 'once':
-      text = `einmalig am ${rule.date ? formatDE(rule.date) : '?'}`;
+      rhythm = `einmalig am ${rule.date ? formatDE(rule.date) : '?'}`;
+      rhythmShort = rhythm;
       break;
     case 'monthly': {
       const i = rule.interval ?? 1;
-      text = i === 1 ? `monatlich ${day(rule.dayOfMonth ?? 1)}`
-        : `alle ${i} Monate ${day(rule.dayOfMonth ?? 1)}`;
+      const d = rule.dayOfMonth ?? 1;
+      rhythm = i === 1 ? `monatlich ${day(d)}` : `alle ${i} Monate ${day(d)}`;
+      rhythmShort = i === 1 ? `monatlich ${dayShort(d)}` : `alle ${i} Monate ${dayShort(d)}`;
       break;
     }
     case 'quarterly':
-      text = `quartalsweise im ${(rule.monthOffset ?? 0) + 1}. Quartalsmonat ${day(rule.dayOfMonth ?? 1)}`;
+      rhythm = `quartalsweise im ${(rule.monthOffset ?? 0) + 1}. Quartalsmonat ${day(rule.dayOfMonth ?? 1)}`;
+      rhythmShort = `quartalsweise ${dayShort(rule.dayOfMonth ?? 1)}`;
       break;
     case 'yearly':
-      text = `jährlich am ${rule.dayOfMonth ?? 1}. ${MONTH_NAMES[(rule.month ?? 1) - 1]}`;
+      rhythm = `jährlich am ${rule.dayOfMonth ?? 1}. ${MONTH_NAMES[(rule.month ?? 1) - 1]}`;
+      rhythmShort = `jährlich am ${rule.dayOfMonth ?? 1}.${rule.month ?? 1}.`;
       break;
     case 'weekly': {
       const i = rule.interval ?? 1;
-      const wd = WEEKDAY_NAMES[rule.weekday ?? 1];
-      text = i === 1 ? `wöchentlich am ${wd}` : `alle ${i} Wochen am ${wd}`;
+      const wd = rule.weekday ?? 1;
+      rhythm = i === 1 ? `wöchentlich am ${WEEKDAY_NAMES[wd]}` : `alle ${i} Wochen am ${WEEKDAY_NAMES[wd]}`;
+      rhythmShort = i === 1 ? `wöchentlich ${WEEKDAY_SHORT[wd]}`
+        : i === 2 ? `14-täglich ${WEEKDAY_SHORT[wd]}`
+          : `alle ${i} Wochen ${WEEKDAY_SHORT[wd]}`;
       break;
     }
     case 'everyNDays':
-      text = `alle ${rule.n ?? 30} Tage`;
+      rhythm = `alle ${rule.n ?? 30} Tage`;
+      rhythmShort = rhythm;
       break;
     default:
-      text = rule.type;
+      rhythm = rule.type;
+      rhythmShort = rule.type;
   }
-  const skips = (rule.skipMonths ?? []).map((m) => MONTH_NAMES[m - 1]);
-  if (skips.length) text += `, außer ${skips.join(', ')}`;
-  if ((rule.skipDates ?? []).length) text += `, ${rule.skipDates.length} Ausnahmetermin(e)`;
-  return text;
+
+  const months = rule.skipMonths ?? [];
+  const dates = rule.skipDates ?? [];
+  const parts = [];
+  const partsShort = [];
+  if (months.length) {
+    parts.push(`außer ${months.map((m) => MONTH_NAMES[m - 1]).join(', ')}`);
+    partsShort.push(`außer ${months.map((m) => MONTH_SHORT[m - 1]).join(', ')}`);
+  }
+  if (dates.length) {
+    parts.push(`${dates.length} Ausnahmetermin(e)`);
+    partsShort.push(`${dates.length} Ausnahme${dates.length === 1 ? '' : 'n'}`);
+  }
+
+  return {
+    rhythm,
+    rhythmShort,
+    exceptions: parts.join(', '),
+    exceptionsShort: partsShort.join(' · '),
+  };
+}
+
+/** Menschenlesbare Beschreibung einer Regel, z.B. "monatlich am 1., außer Dezember". */
+export function describeRule(rule) {
+  const { rhythm, exceptions } = describeRuleParts(rule);
+  return exceptions ? `${rhythm}, ${exceptions}` : rhythm;
 }

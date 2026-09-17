@@ -31,12 +31,14 @@ Nicht-Ziel in dieser Phase: Design, Mehrbenutzerbetrieb, echte Bankanbindung.
 | A9 | **Chart.js per CDN** | Ausreichend für Linien- und Stapelbalken-Diagramm, kein Bundler nötig | Offline-Betrieb funktioniert nur mit Cache |
 | A10 | **Neurendern statt Diffing**: jede Änderung schreibt den Zustand und rendert den aktiven Tab neu | Bei der Datenmenge eines Privatkontos (einige hundert Buchungen) unmessbar schnell und deutlich einfacher als Zustandssynchronisation | Fokus/Scrollposition gehen bei Vollrender verloren — bewusst akzeptiert |
 | A11 | **Kategorien hierarchisch über `parentId`**, gespeichert bleibt eine *flache* Liste | Referenzen (`entry.categoryId`) bleiben stabil und Import/Export einfach; der Baum ist eine Sicht, kein Speicherformat | Baumoperationen liegen in `src/core/categories.js`; `normalizeState` muss Zyklen und unbekannte Eltern auflösen |
-| A12 | **Inline-Bearbeitung in der Übersichtstabelle** für Name, Art und Betrag; alles Weitere im Dialog | Die häufigste Pflege ist „Betrag hat sich geändert" — dafür soll kein Dialog nötig sein. Regel und Phasen brauchen dagegen Kontext | Die Betragseingabe adressiert genau die *heute gültige* Phase (`setAmountAt`); die Tabelle weist die laufende Phase aus |
+| A12 | *(durch A20 abgelöst)* **Inline-Bearbeitung in der Übersichtstabelle** für Name, Art und Betrag; alles Weitere im Dialog | Die häufigste Pflege ist „Betrag hat sich geändert" — dafür soll kein Dialog nötig sein. Regel und Phasen brauchen dagegen Kontext | Die Betragseingabe adressiert genau die *heute gültige* Phase (`setAmountAt`); die Tabelle weist die laufende Phase aus |
 | A13 | **Inline-Änderungen greifen auf `change`**, nicht auf `input` | Bei `input` würde jeder Tastendruck einen Schreibvorgang auslösen | Übernahme erst beim Verlassen des Feldes bzw. mit Enter — siehe A16 zur Folge daraus |
 | A14 | **Zeiträume sind immer ganze Monate** — gespeichert als Monatsbereich `settings.view = {from, to}` im Dokument, Standard ist das komplette laufende Kalenderjahr | Geplant wird in Monaten, nicht in Tagen; ein angebrochener Monat verzerrt Monatsbalken und Kennzahlen. Im Dokument gilt der Zeitraum für alle Sichten gleichzeitig und übersteht einen Reload; bedient wird er dort, wo er wirkt — im Verlauf-Tab | `windowOf()` übersetzt in ein Tagesfenster (erster bis letzter Monatstag); die UI kennt nur `<input type="month">`. Schemaänderung → **Version 2** |
-| A15 | **Kategorie ebenfalls inline wählbar** (Auswahlfeld mit eingerücktem Baum, voller Pfad im Tooltip) | Das Umsortieren vieler Einträge war der einzige verbliebene Grund, den Dialog zu öffnen | Der Dialog bleibt für alles Strukturelle zuständig, die Tabelle deckt die laufende Pflege ab |
-| A16 | **Inline-Änderungen rendern nicht neu** (`updateInline`): sie schreiben und speichern, danach frischt die Sicht nur die abgeleiteten Stellen der betroffenen Zeile auf (`patchRow`) | A10 (Vollrender) ist für Formulare falsch: das `change` einer Zelle wird durch den Klick in die *nächste* Zelle ausgelöst — der Vollrender tauscht die Tabelle dann mitten im Klick aus, der Klick landet im Nichts oder auf einer verschobenen Nachbarzeile, und die Eingabe geht in die falsche Zeile. Bei gleichnamigen Kopien untereinander fällt das als „falsche Zeile bearbeitet" auf | Die Tabelle muss abgeleitete Zellen (Betragsfarbe, Phasenhinweis, Kategoriefarbe/-Tooltip, Aktiv-Graustufe) selbst nachziehen. Andere Tabs sind unkritisch, weil `render()` ohnehin nur den aktiven Tab zeichnet |
+| A15 | **Kategorie ebenfalls direkt aus der Liste wählbar** — seit A20 als Token-Popover mit eingerücktem Baum statt als Auswahlfeld in der Zeile | Das Umsortieren vieler Einträge war der einzige verbliebene Grund, den Dialog zu öffnen | Der Dialog bleibt für alles Strukturelle zuständig, die Tabelle deckt die laufende Pflege ab |
+| A16 | *(seit A20 nur noch für das Umbenennen an Ort und Stelle)* **Inline-Änderungen rendern nicht neu** (`updateInline`): sie schreiben und speichern, danach frischt die Sicht nur die abgeleiteten Stellen der betroffenen Zeile auf (`patchRow`) | A10 (Vollrender) ist für Formulare falsch: das `change` einer Zelle wird durch den Klick in die *nächste* Zelle ausgelöst — der Vollrender tauscht die Tabelle dann mitten im Klick aus, der Klick landet im Nichts oder auf einer verschobenen Nachbarzeile, und die Eingabe geht in die falsche Zeile. Bei gleichnamigen Kopien untereinander fällt das als „falsche Zeile bearbeitet" auf | Die Tabelle muss abgeleitete Zellen (Betragsfarbe, Phasenhinweis, Kategoriefarbe/-Tooltip, Aktiv-Graustufe) selbst nachziehen. Andere Tabs sind unkritisch, weil `render()` ohnehin nur den aktiven Tab zeichnet |
 | A18 | **Startdialog beim ersten Aufruf** mit drei Wegen: eigene JSON-Datei, leer beginnen, Beispieldaten. Er lässt sich nicht ohne Entscheidung schließen und erscheint nach „Alles zurücksetzen" erneut | Eine leere App erklärt sich nicht von selbst; die drei Wege decken alle Startsituationen ab. „Noch nie benutzt" (`hasStoredState()`) ist etwas anderes als „bewusst leer" — nur Ersteres fragt, und Zurücksetzen stellt genau diesen Ausgangszustand wieder her | Esc muss zusätzlich über das `close`-Ereignis abgefangen werden: ohne vorherige Nutzerinteraktion liefert Chrome `cancel` nicht abbrechbar aus. `resetState()` löscht die Ablage und speichert bewusst **nichts** zurück |
+| A20 | **Buchungsliste als Token-Liste statt Formulartabelle**: die Zeile ist Text in einem Raster mit weglassbaren Zellen, jede veränderliche Angabe ist ein Token, dessen Klick ein Popover mit genau diesem Aspekt öffnet | Die Formulartabelle zeigte 11 × 5 Bedienelemente gleichzeitig — nichts stach hervor. Vor allem aber zwang sie die Wiederholung in eine Spalte, die für jeden Regeltyp andere Parameter bräuchte, weshalb die Regel dort nur *lesbar* war. Ein Token trägt nur das, was die jeweilige Regel hat | Das Popover hängt am `<body>` und findet seinen Anker über einen Selektor wieder; damit liegt der Fokus beim Bearbeiten nie in der Liste, und A16 ist für alle Tokens konstruktiv erledigt statt abgefangen. Preis: eigene Positionierungslogik (`popover.js`) und Angaben, die anklickbar sind, ohne wie ein Eingabefeld auszusehen |
+| A21 | **Tastaturbedienung der Liste**: ↑/↓ Zeile, ←/→ Angabe, Enter öffnet, Esc schließt | In einem Dauerformular ist die Tab-Reihenfolge schon von den Feldern belegt; erst die Token-Liste macht eine sinnvolle Navigation möglich | Enter/Leertaste werden ausdrücklich behandelt, nicht über die native Schaltflächen-Aktivierung |
 | A19 | **Beispieldaten liegen als JSON im Auslieferungsformat** (`public/data/dummy-data.json`), nicht als Code | Sie laufen damit durch exakt dieselbe Importprüfung wie eine fremde Datei — der Importpfad wird bei jedem Start mitgetestet — und lassen sich ohne Werkzeug bearbeiten | Das Laden ist asynchron (`fetch`); es gibt nur noch eine Quelle für Startdialog und „Beispieldaten laden" im Konto-Tab |
 | A17 | **Kopien bekommen einen eindeutigen Namen** (`Name (Kopie)`, `(Kopie 2)`, …; vorhandene Kopie-Suffixe werden nicht gestapelt) | Zwei identisch benannte Zeilen direkt untereinander sind in einer inline bearbeitbaren Tabelle nicht auseinanderzuhalten | `duplicateEntry(entry, existing)` braucht die vorhandenen Einträge |
 
@@ -56,7 +58,7 @@ src/core/            pure Rechenlogik — Browser + Tests
 public/              UI (Vanilla, ES-Module)
   app.js             Zustand, Render-Zyklus, Tab-Umschaltung
   components/        je Tab eine Datei + entryForm.js (Dialog), welcome.js (Startdialog),
-                     viewRange.js (Zeitraum), format.js
+                     popover.js (Token-Editor), viewRange.js (Zeitraum), format.js
   data/              dummy-data.json — Beispieldaten im Import/Export-Format
 test/                node:test-Suite gegen src/core
 ```
@@ -191,6 +193,26 @@ Das Zusammenspiel von Fokus, `change` und Render (A16) ist DOM-Verhalten und
 damit außerhalb dieser Suite; es wird mit echten Maus- und Tastatureingaben im
 Browser geprüft (Klick von einer Zelle in die nächste über mehrere
 gleichartige Zeilen hinweg).
+
+### Buchungsliste
+
+Die Zeile besteht aus vier Tokens — Name, Betrag, Rhythmus, Kategorie — und
+einer Aktionsgruppe (stilllegen, duplizieren, alle Felder). Das Raster ist fest,
+damit Beträge untereinander vergleichbar bleiben; nur der Inhalt einzelner
+Zellen entfällt, wo es nichts zu zeigen gibt.
+
+| Token | Editor | Deckt ab |
+|---|---|---|
+| Name | Eingabefeld an Ort und Stelle | `name` |
+| Betrag | Popover | `direction` und die komplette Phasenliste |
+| Rhythmus | Popover | Regeltyp, dessen Parameter, `skipMonths` |
+| Kategorie | Popover | `categoryId` über den eingerückten Baum |
+
+Was ein Token nicht abdeckt — Laufzeit, Notiz, einzelne Ausnahmetermine,
+Löschen — bleibt im Dialog hinter `⋯` erreichbar. Änderungen wirken sofort
+(`update()`); die Liste rendert dabei neu, das offene Popover bleibt stehen und
+sucht seinen Anker neu. Nur ein Wechsel des Regeltyps oder der Phasenzahl baut
+den Popover-Inhalt neu auf — sonst würde es den Cursor aus einem Feld werfen.
 
 ### Beispieldaten
 
