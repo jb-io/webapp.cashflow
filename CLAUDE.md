@@ -143,6 +143,18 @@ Regeltyp genau einmal, feste Terminzahlen und — die tragende Zusicherung —
 **die Summe aller Ausgaben entspricht 2026 exakt der Summe beider Gehälter**
 (66.000 €, Jahresergebnis 0). Beträge dort nicht ohne Gegenrechnung ändern.
 
+## Veröffentlichung
+
+Jeder Push nach `master` baut und veröffentlicht über
+`.github/workflows/pages.yml` nach <https://jb-io.github.io/webapp.cashflow/>.
+Typprüfung und Tests laufen vor dem Bau — ein roter Lauf veröffentlicht nichts.
+Die Seite läuft unter einem Unterpfad, weil `vite.config.ts` `base: './'` setzt
+und die Navigation über Hash-Routen geht; beides nicht ohne Not ändern.
+
+Vor dem Push lässt sich der Lauf nachstellen: frisch klonen, `npm ci`,
+`npm run typecheck`, `npm test`, `npx vite build` — und `dist/` testweise unter
+einem Unterpfad ausliefern, um die Projektseite nachzubilden.
+
 ## Prüfen von Oberflächenänderungen
 
 `node:test` deckt nur `src/core` ab. Für die Oberfläche gibt es kein

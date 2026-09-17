@@ -285,7 +285,27 @@ Der Datensatz ist auf 2026 festgelegt und bringt seinen Zeitraum mit
 Jahr zeigt, für das die Rechnung aufgeht. Wer die Beträge ändert, bricht die
 Gleichheit — der Test weist genau darauf hin.
 
-## 8. Bewusst ausgelassen
+## 8. Veröffentlichung
+
+`.github/workflows/pages.yml` baut bei jedem Push nach `master` und legt
+`dist/` als GitHub Page ab: <https://jb-io.github.io/webapp.cashflow/>.
+
+Typprüfung und Testsuite laufen **vor** dem Bau im selben Job — schlägt eines
+fehl, entsteht kein Artefakt und die bisherige Seite bleibt stehen.
+
+Zwei Dinge, die den Betrieb auf einer Projektseite unter `/<repo>/` tragen:
+
+- `base: './'` in `vite.config.ts` — die Seite läuft unter jedem Unterpfad,
+  ohne den Repository-Namen zu kennen.
+- Hash-Routen (A22) — der Server sieht immer nur `/<repo>/` und braucht keine
+  Umschreibregel; ein Neuladen auf `#/kategorien` funktioniert.
+
+Die Pages-Site selbst wurde einmalig auf „GitHub Actions" gestellt
+(`gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`). Der Weg
+über `configure-pages` mit `enablement: true` scheitert: der Workflow-Token
+darf keine Pages-Site anlegen.
+
+## 9. Bewusst ausgelassen
 
 Tagesgenaue Zeiträume (siehe A14), je Seite eigene Zeiträume, Mehrfachzuordnung
 eines Eintrags zu mehreren Kategorien, Drag-and-drop für den Kategoriebaum,
@@ -295,7 +315,7 @@ Authentifizierung, Server-Persistenz, Prognoseszenarien, Ist-Abgleich mit
 echten Kontoumsätzen, Feiertags- und Werktagsverschiebung von Terminen,
 Undo/Redo.
 
-## 9. Geplanter nächster Schritt
+## 10. Geplanter nächster Schritt
 
 Der Umstieg auf Vite + React (A22) und auf TypeScript (A26) ist erfolgt.
 Offen bleibt:
