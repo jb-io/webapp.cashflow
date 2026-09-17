@@ -18,11 +18,15 @@ Drei Fragen beantwortet das Programm auf einen Blick:
 Deine Daten bleiben dabei in deinem Browser. Nichts wird hochgeladen, es gibt
 kein Konto und keine Anmeldung.
 
+**Direkt ausprobieren:** <https://jb-io.github.io/webapp.cashflow/> — nichts zu
+installieren, nichts anzumelden.
+
 ---
 
-## Starten
+## Selbst betreiben
 
-Du brauchst [Node.js](https://nodejs.org) (Version 22 oder neuer). Einmalig:
+Du kannst cashflow auch auf dem eigenen Rechner laufen lassen. Du brauchst
+[Node.js](https://nodejs.org) (Version 22 oder neuer). Einmalig:
 
 ```bash
 npm install

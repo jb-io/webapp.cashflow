@@ -45,7 +45,11 @@ jobs:
       - name: Bauen
         run: npx vite build
 
+      # `enablement` schaltet Pages beim ersten Lauf selbst frei, damit der
+      # Workflow ohne Handgriff in den Repository-Einstellungen auskommt.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
