@@ -244,5 +244,12 @@ Konto → *JSON exportieren*, Datei mitnehmen, dort → *JSON importieren*.
 
 ---
 
+## Lizenz
+
+cashflow steht unter der [GNU General Public License v3.0](LICENSE). Du darfst
+es benutzen, weitergeben und verändern — wenn du eine veränderte Fassung
+weitergibst, muss sie unter derselben Lizenz stehen und den Quellcode
+mitliefern.
+
 <sub>Technische Unterlagen für die Weiterentwicklung stehen in
 [Architecture.md](Architecture.md).</sub>

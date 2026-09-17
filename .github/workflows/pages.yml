@@ -1,0 +1,62 @@
+# Baut die App und veröffentlicht sie als GitHub Page.
+#
+# Veröffentlicht wird nur, was vorher durchgelaufen ist: Typprüfung und
+# Testsuite laufen im selben Job vor dem Bau. Schlägt eines fehl, entsteht
+# gar kein Artefakt und die bisherige Seite bleibt unangetastet.
+name: Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Nur lesen, plus die beiden Rechte, die das Veröffentlichen braucht.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Ein Lauf nach dem anderen; laufende Veröffentlichungen nicht abbrechen.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Typen prüfen
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      # `npm run build` prüft die Typen erneut; hier genügt Vite allein.
+      - name: Bauen
+        run: npx vite build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

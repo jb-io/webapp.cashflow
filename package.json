@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Liquiditaetsplanung: wiederkehrende Einnahmen/Ausgaben -> erwarteter Kontoverlauf",
+  "license": "GPL-3.0-only",
   "engines": {
     "node": ">=22.18"
   },
