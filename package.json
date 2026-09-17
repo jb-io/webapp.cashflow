@@ -4,6 +4,20 @@
   "private": true,
   "type": "module",
   "description": "Liquiditaetsplanung: wiederkehrende Einnahmen/Ausgaben -> erwarteter Kontoverlauf",
+  "keywords": [
+    "cashflow",
+    "liquiditaetsplanung",
+    "finanzplanung",
+    "haushaltsbuch",
+    "personal-finance",
+    "budgeting",
+    "forecast",
+    "recurring-transactions",
+    "react",
+    "typescript",
+    "vite",
+    "chartjs"
+  ],
   "license": "GPL-3.0-only",
   "engines": {
     "node": ">=22.18"
