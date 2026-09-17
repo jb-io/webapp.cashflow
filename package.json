@@ -4,12 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Liquiditaetsplanung: wiederkehrende Einnahmen/Ausgaben -> erwarteter Kontoverlauf",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --test"
+    "test": "node --test",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
@@ -23,6 +27,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "playwright": "^1.63.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.0"
   }

@@ -275,8 +275,15 @@ input.right { text-align: right; font-variant-numeric: tabular-nums; }
 .row-item.selected { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 28%, transparent); }
 .row-item.dimmed .tok { opacity: .5; text-decoration: line-through; }
 
-/* Buchungszeile: mobil dreizeilig, ab Tablet einzeilig im festen Raster */
-.entry-row { grid-template-columns: 1fr auto; grid-template-areas: "name amount" "rule cat" "meta act"; }
+/*
+ * Buchungszeile: mobil dreizeilig, ab Tablet einzeilig im festen Raster.
+ * Die zweite Spalte ist gedeckelt — sonst zieht ein langer Kategoriepfad sie
+ * auf und die Bezeichnung links bleibt als Stummel zurück.
+ */
+.entry-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
+  grid-template-areas: "name amount" "rule cat" "meta act";
+}
 .entry-row .tok-name { grid-area: name; }
 .entry-row .tok-amount { grid-area: amount; }
 .entry-row .tok-rule { grid-area: rule; }
@@ -297,7 +304,7 @@ input.right { text-align: right; font-variant-numeric: tabular-nums; }
   font: inherit; color: inherit; text-align: left;
   background: none; border: 1px solid transparent; border-radius: 7px;
   padding: 5px 7px; min-width: 0; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 7px;
+  display: inline-flex; align-items: center; gap: 5px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .tok:hover { border-color: var(--border-strong); background: var(--surface); }
@@ -307,6 +314,10 @@ input.right { text-align: right; font-variant-numeric: tabular-nums; }
 .tok-sub { color: var(--text-faint); font-weight: 450; }
 .tok-empty { color: var(--text-faint); font-style: italic; }
 .tok-badge { font-size: 10px; font-weight: 600; color: var(--text-faint); }
+
+/* Der Pfad der Oberkategorien weicht zuerst, der Name selbst bleibt stehen. */
+.cat-parent { color: var(--text-faint); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.cat-leaf { flex: none; }
 
 /*
  * Maßgleich zu `.tok`: das Feld ersetzt das Token an Ort und Stelle. Wäre es

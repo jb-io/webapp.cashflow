@@ -190,6 +190,9 @@ function EntryRow({
   const phases = sortPhases(entry.amounts ?? []).length;
   const signed = entry.direction === 'expense' ? -amountAt(entry, now) : amountAt(entry, now);
   const category = categories.find((c) => c.id === entry.categoryId);
+  // Über den Baum, nicht über den Pfad-String: ein Kategoriename darf selbst
+  // ein „ / " enthalten („Haus / Wohnung").
+  const parentPath = category?.parentId ? pathOf(categories, category.parentId) : '';
   const cls = (token: string) => `tok tok-${token} ${openToken === token ? 'open' : ''}`;
 
   return (
@@ -234,7 +237,12 @@ function EntryRow({
         title={`${category ? pathOf(categories, category.id) : 'ohne Kategorie'} — ändern`}
         onClick={() => onToken('category')}>
         <span className="dot" style={{ background: category?.color ?? NO_CATEGORY_COLOR }} />
-        <span className="truncate">{category ? pathOf(categories, category.id) : 'ohne Kategorie'}</span>
+        {/*
+          * Der Pfad der Oberkategorien wird zuerst gekürzt, der Name der
+          * Kategorie selbst bleibt stehen — er trägt die Aussage.
+          */}
+        {parentPath && <span className="cat-parent">{parentPath} /</span>}
+        <span className="cat-leaf">{category ? category.name : 'ohne Kategorie'}</span>
       </button>
 
       <span className="row-actions">

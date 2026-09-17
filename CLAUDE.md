@@ -29,6 +29,11 @@ streift die Typen ab. Daraus folgen drei Regeln für alles unter `src/core` und
 Nach jeder Änderung `npm run typecheck` — `node --test` allein merkt
 Typfehler nicht, es streift die Typen ja nur ab.
 
+`npm run screenshots` erzeugt die Bilder der README neu (Playwright gegen das
+vorhandene Chrome, Server muss über `npm run preview` laufen). Nach
+Änderungen an der Oberfläche mitlaufen lassen, sonst zeigt die Anleitung
+einen Stand, den es nicht mehr gibt.
+
 ## Pflicht: Architecture.md
 
 `Architecture.md` hält alle Architekturentscheidungen als nummerierte Liste

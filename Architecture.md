@@ -259,6 +259,11 @@ Dateien; Terminzahlen und Jahressummen sind fest verdrahtet, damit eine
 (A20, A21, A25) sind DOM-Verhalten; sie werden mit echten Maus- und
 Tastatureingaben in einem headless Chrome geprüft, nicht von dieser Suite.
 
+`npm run screenshots` (Playwright, `scripts/screenshots.mjs`) erzeugt die
+Bilder der README aus den Beispieldaten. Der Lauf geht über den Startdialog
+statt die Ablage zu füllen — damit prüft er den Einstieg gleich mit und
+scheitert, wenn eine Route, ein Token oder ein Editor fehlt.
+
 ### Beispieldaten
 
 `public/data/dummy-data.json` ist bewusst kein beliebiger Datensatz, sondern
