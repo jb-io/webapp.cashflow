@@ -7,7 +7,7 @@ und Jahresergebnis.
 ```bash
 npm install
 npm run dev       # http://localhost:3000
-npm run build     # nach dist/
+npm run build     # Typprüfung + Bau nach dist/
 npm test          # Rechenlogik in src/core
 ```
 
@@ -21,7 +21,7 @@ JSON-Export unter **Konto** nutzen.
 
 Oberfläche: React mit Hash-Routen (`#/verlauf`, `#/buchungen`, `#/kategorien`,
 `#/konto`), ausgelegt für Telefon wie großen Bildschirm, heller und dunkler
-Modus. Die Rechenlogik in `src/core` ist framework-frei und wird direkt von der
-Testsuite geladen.
+Modus. Geschrieben in TypeScript. Die Rechenlogik in `src/core` ist framework-frei
+und wird von der Testsuite ohne Bundler direkt geladen.
 
 Architekturentscheidungen: siehe [Architecture.md](Architecture.md).

@@ -1,6 +1,6 @@
 # Architektur — webapp.cashflow
 
-Stand: 2026-09-17 · Phase: **React-Frontend auf geprüftem Rechenkern**
+Stand: 2026-09-17 · Phase: **React + TypeScript auf geprüftem Rechenkern**
 
 Diese Datei hält die tragenden Entscheidungen fest und wird bei jeder
 Architekturänderung mit aktualisiert.
@@ -21,7 +21,7 @@ Nicht-Ziel in dieser Phase: Design, Mehrbenutzerbetrieb, echte Bankanbindung.
 | # | Entscheidung | Begründung | Konsequenz |
 |---|---|---|---|
 | A1 | *(durch A22 abgelöst)* **Express nur als Static-Server**, keine REST-API | Alle Daten liegen im Browser; ein Backend ohne Daten wäre reine Zeremonie | `server.js` ist entfallen — Vite liefert aus |
-| A2 | *(durch A22 abgelöst)* **Kein Build-Step**: native ES-Module in Browser und Node | Trug den Prototyp ohne Werkzeugkette | Gilt weiterhin für `src/core`: dort kein JSX, keine Bundler-Eigenheiten, damit die Tests die Dateien direkt laden |
+| A2 | *(durch A22 abgelöst, in abgewandelter Form von A27 fortgeführt)* **Kein Build-Step**: native ES-Module in Browser und Node | Trug den Prototyp ohne Werkzeugkette | Gilt weiterhin für `src/core`: dort kein JSX, keine Bundler-Eigenheiten, damit die Tests die Dateien direkt laden |
 | A3 | **`src/core` ist pur** — keine DOM-, Node- oder Framework-Abhängigkeit | Die Rechenlogik ist der wertvolle Teil und soll den geplanten Umstieg auf Vite + React unverändert überleben | UI-Code darf `core` importieren, nie umgekehrt |
 | A4 | **Persistenz in `localStorage`** + JSON-Import/-Export | Kein Server-State, kein Setup; Export hält die Daten portabel und sicherbar | Daten hängen am Browserprofil — Backup ist Nutzeraufgabe |
 | A5 | **Eigenes Regelformat statt RRULE** | „monatlich außer Dezember", Monatsletzter und Betragsphasen lassen sich direkt abbilden *und* in einem Formular pflegen; RRULE hätte einen Übersetzungslayer und eine schwerere UI erzwungen | Eigene Engine inkl. Tests (`src/core/recurrence.js`) |
@@ -42,6 +42,8 @@ Nicht-Ziel in dieser Phase: Design, Mehrbenutzerbetrieb, echte Bankanbindung.
 | A23 | **Ein Layout, zwei Ausprägungen**: unter 900 px eine Spalte mit Navigationsleiste unten, darüber feste Seitenleiste; Editoren erscheinen mobil als Blatt von unten, ab 760 px angedockt am Token | Die Daumenzone ist unten, der Blick oben — dieselbe Navigation an beiden Stellen wäre auf einem der beiden Geräte falsch | Zwei Bruchstellen in `styles.css` (900 px Navigation, 760 px Zeilenraster und Editoren); `Sheet` entscheidet zur Laufzeit, ob es andockt |
 | A24 | **Kategoriefarben aus einer geprüften Palette** (`DEFAULT_COLORS`), Diagrammfarben aus denselben CSS-Variablen wie die Oberfläche | Farbabstände sind rechenbar, nicht Geschmackssache: die Vorgängerpalette fiel bei Farbfehlsichtigkeit und beim Normalsicht-Abstand durch. Ab neun Reihen wird gebündelt statt weitergefärbt | Reihenfolge der Palette nicht umsortieren; der dunkle Modus hat eigene Werte statt gespiegelter |
 | A21 | **Tastaturbedienung der Liste**: ↑/↓ Zeile, ←/→ Angabe, Enter öffnet, Esc schließt | In einem Dauerformular ist die Tab-Reihenfolge schon von den Feldern belegt; erst die Token-Liste macht eine sinnvolle Navigation möglich | Enter/Leertaste werden ausdrücklich behandelt, nicht über die native Schaltflächen-Aktivierung |
+| A26 | **TypeScript im ganzen Projekt**, geprüft mit `tsc --noEmit` als Teil von `npm run build` | Dasselbe Dokument wandert durch Kern, Speicher, Import und Oberfläche; die Typen beschreiben es an einer Stelle (`src/core/types.ts`) statt verstreut in JSDoc-Blöcken. Beim Umstellen fielen prompt schlampige Testdaten auf: fehlendes `parentId`, fehlendes `note` | Keine Enums, keine Parameter-Eigenschaften — siehe A27 |
+| A27 | **Testsuite bleibt ohne Bundler**: `node --test` führt die `.ts`-Dateien direkt aus (Type-Stripping ab Node 22.18) | Ein zweiter Werkzeugstapel nur für Tests wäre Aufwand ohne Gegenwert; so prüft die Suite exakt die Dateien, die auch ausgeliefert werden | Verlangt rein löschbare Syntax (`erasableSyntaxOnly`), Importe mit echter Endung (`./foo.ts`) und Typimporte als `import type` (`verbatimModuleSyntax`) |
 | A25 | **Zeilenhöhe darf sich beim Bedienen nicht ändern**: die Detailzeile einer Buchung ist immer sichtbar, nicht erst bei Auswahl | Erscheint sie erst beim Anklicken, verschiebt sie alles darunter — zwischen Drücken und Loslassen wandert das Ziel weg, und der Klick kommt nie an. Dieselbe Klasse von Fehlern wie A16, nur über das Layout statt über den DOM-Austausch | Auch das Feld zum Umbenennen ist maßgleich zum Token gebaut |
 | A19 | **Beispieldaten liegen als JSON im Auslieferungsformat** (`public/data/dummy-data.json`), nicht als Code | Sie laufen damit durch exakt dieselbe Importprüfung wie eine fremde Datei — der Importpfad wird bei jedem Start mitgetestet — und lassen sich ohne Werkzeug bearbeiten | Das Laden ist asynchron (`fetch`); es gibt nur noch eine Quelle für Startdialog und „Beispieldaten laden" im Konto-Tab |
 | A17 | **Kopien bekommen einen eindeutigen Namen** (`Name (Kopie)`, `(Kopie 2)`, …; vorhandene Kopie-Suffixe werden nicht gestapelt) | Zwei identisch benannte Zeilen direkt untereinander sind in einer inline bearbeitbaren Tabelle nicht auseinanderzuhalten | `duplicateEntry(entry, existing)` braucht die vorhandenen Einträge |
@@ -49,22 +51,31 @@ Nicht-Ziel in dieser Phase: Design, Mehrbenutzerbetrieb, echte Bankanbindung.
 ## 3. Aufbau
 
 ```
-server.js            Static-Server (public/ und src/)
-src/core/            pure Rechenlogik — Browser + Tests
-  dateUtils.js       ISO-Datumsarithmetik in UTC
-  categories.js      Kategoriebaum: Pfad, Tiefe, Unterbaum, Zyklusschutz
-  recurrence.js      expandRule(): Regel -> konkrete Termine; describeRule()
-  amounts.js         amountAt()/setAmountAt(): gültiger Betrag zu einem Datum (Phasen)
-  forecast.js        buildForecast(): Transaktionen + Saldoverlauf; aggregateByMonth()
-  stats.js           computeStats(): Min/Max mit Datum, Delta, Kategoriesummen
-  model.js           Schema, Defaults, Zeitraum (viewOf/windowOf), duplicateEntry(), normalizeState()
-  storage.js         localStorage + JSON-Import/-Export
-public/              UI (Vanilla, ES-Module)
-  app.js             Zustand, Render-Zyklus, Tab-Umschaltung
-  components/        je Tab eine Datei + entryForm.js (Dialog), welcome.js (Startdialog),
-                     popover.js (Token-Editor), viewRange.js (Zeitraum), format.js
-  data/              dummy-data.json — Beispieldaten im Import/Export-Format
-test/                node:test-Suite gegen src/core
+index.html           Einstiegspunkt (Vite)
+vite.config.ts       Vite-Konfiguration
+tsconfig.json        strikt; erasableSyntaxOnly + .ts-Importe wegen A27
+src/core/            pure Rechenlogik — Browser + Tests, ohne React
+  types.ts           fachliche Typen: Dokument, Eintrag, Regel, Forecast, Kennzahlen
+  dateUtils.ts       ISO-Datumsarithmetik in UTC
+  categories.ts      Kategoriebaum: Pfad, Tiefe, Unterbaum, Zyklusschutz
+  recurrence.ts      expandRule(): Regel -> Termine; describeRuleParts()/describeRule()
+  amounts.ts         amountAt()/setAmountAt(): gültiger Betrag zu einem Datum (Phasen)
+  forecast.ts        buildForecast(): Transaktionen + Saldoverlauf; aggregateByMonth()
+  stats.ts           computeStats(): Min/Max mit Datum, Delta, Kategoriesummen
+  model.ts           Schema, Defaults, Zeitraum (viewOf/windowOf), duplicateEntry(), normalizeState()
+  storage.ts         localStorage + JSON-Import/-Export
+src/app/             React-Oberfläche
+  main.tsx           HashRouter + StateProvider
+  App.tsx            Gerüst, Navigation, Routen
+  state/             StateProvider: Dokument, Ableitungen, Änderungswege
+  pages/             je Route eine Seite
+  components/        Sheet (Token-Editor), PeriodPicker, WelcomeDialog, Icons
+  components/editors/ je Token ein Editor: Betrag, Rhythmus, Kategorie, Details
+  charts/            BalanceChart, MonthlyChart, gemeinsames Farbthema
+  styles.css         Gestaltungsgrundlage (Variablen, Layout, Bausteine)
+  format.ts          Beträge, Daten, Monatsbeschriftungen
+public/data/         dummy-data.json — Beispieldaten im Import/Export-Format
+test/                node:test-Suite gegen src/core (führt .ts direkt aus)
 ```
 
 **Zustandsänderungen** laufen ausschließlich über `state/StateProvider.jsx`:
@@ -180,7 +191,8 @@ stehen in `LEGACY_STORAGE_KEYS`.
 
 `npm test` (`node:test`, ohne Runner-Abhängigkeit) deckt ausschließlich
 `src/core` ab — die UI ist im Prototyp bewusst ungetestet. Abgesichert sind
-u. a.: Monatsletzter und Schaltjahr, `skipMonths`/`skipDates`, am `startDate`
+`npm run build` prüft zusätzlich mit `tsc --noEmit`, `npm run typecheck`
+macht dasselbe allein. Abgesichert sind u. a.: Monatsletzter und Schaltjahr, `skipMonths`/`skipDates`, am `startDate`
 verankerte Intervalle, 14-tägig über den Jahreswechsel, Drift von
 `everyNDays`, Phasenwechsel exakt am Grenztag, Saldovortrag bei später
 beginnendem Fenster, Min/Max und Jahresdelta, Baumreihenfolge und Zyklusschutz
@@ -250,10 +262,13 @@ Terminen, Undo/Redo.
 
 ## 8. Geplanter nächster Schritt
 
-Der Umstieg auf Vite + React ist erfolgt (A22); `src/core` wurde dabei nicht
-angefasst. Offen bleiben aus derselben Überlegung:
+Der Umstieg auf Vite + React (A22) und auf TypeScript (A26) ist erfolgt.
+Offen bleibt:
 
-- **TypeScript**: JSDoc → `.ts` für `src/core`, danach für `src/app`.
 - **A4 erneut prüfen**: sollen die Daten geräteübergreifend verfügbar sein,
   braucht es eine Ablage außerhalb des Browsers — dann ist auch A1 wieder
   offen.
+- **`normalizeState` gegen ein Schema prüfen** statt von Hand: die Funktion ist
+  der einzige Eingang für fremdes JSON und trägt die Last allein. Die Typen
+  beschreiben das Ziel inzwischen vollständig — ein Prüfer ließe sich daraus
+  ableiten.

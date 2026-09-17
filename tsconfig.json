@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /*
+     * Die Testsuite lädt `src/core` ohne Bundler direkt über `node --test`
+     * (Type-Stripping). Das verlangt Importe mit echter Dateiendung und
+     * Syntax, die sich rein löschen lässt — keine Enums, keine
+     * Parameter-Eigenschaften, Typimporte ausdrücklich als `import type`.
+     */
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  "include": ["src", "test", "vite.config.ts"]
+}

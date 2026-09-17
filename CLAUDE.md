@@ -8,16 +8,26 @@ Projektsprache ist Deutsch: Bezeichner, Kommentare, UI-Texte und Dokumentation.
 
 ```bash
 npm run dev                                 # Vite-Entwicklungsserver, http://localhost:3000
-npm run build                               # Produktionsbau nach dist/
+npm run build                               # tsc --noEmit && vite build -> dist/
+npm run typecheck                           # nur die Typprüfung
 npm run preview                             # dist/ ausliefern (für Prüfungen im Browser)
-npm test                                    # node:test, findet test/*.test.js selbst
-node --test test/view.test.js               # eine Datei
+npm test                                    # node:test, findet test/*.test.ts selbst
+node --test test/view.test.ts               # eine Datei
 node --test --test-name-pattern="Zyklen"    # einzelne Tests über den Namen
 ```
 
-`npm test` läuft **ohne Bundler** direkt gegen `src/core` — deshalb darf dort
-kein JSX und kein Vite-spezifischer Import stehen. `node --check <datei>` ist
-die schnellste Syntaxprüfung für eine einzelne `.js`-Datei (nicht für `.jsx`).
+`npm test` läuft **ohne Bundler**: Node führt die `.ts`-Dateien direkt aus und
+streift die Typen ab. Daraus folgen drei Regeln für alles unter `src/core` und
+`test/` (A27):
+
+- **Relative Importe mit echter Endung**: `from './model.ts'`, nie `.js`.
+- **Nur rein löschbare Syntax** — keine Enums, keine Parameter-Eigenschaften,
+  keine `namespace`. `erasableSyntaxOnly` erzwingt das.
+- **Typen immer als `import type`** (`verbatimModuleSyntax`), sonst sucht Node
+  zur Laufzeit nach einem Export, den es nicht gibt.
+
+Nach jeder Änderung `npm run typecheck` — `node --test` allein merkt
+Typfehler nicht, es streift die Typen ja nur ab.
 
 ## Pflicht: Architecture.md
 
@@ -31,7 +41,8 @@ verweisen darauf ("siehe Architecture.md, A20").
 
 ```
 src/core/      pure Rechenlogik: kein DOM, kein React, kein JSX
-src/app/       React-Oberfläche (Vite, Hash-Routing)
+src/core/types.ts  die fachlichen Typen — einzige Quelle, hier zuerst nachsehen
+src/app/       React-Oberfläche (Vite, Hash-Routing), .tsx
 public/data/   dummy-data.json — Beispieldaten im Import/Export-Format
 test/          node:test, deckt ausschließlich src/core ab
 ```
@@ -47,7 +58,7 @@ Oberfläche genutzt.
 ## Datenmodell
 
 Ein einziges Dokument ist gleichzeitig Zustand, localStorage-Inhalt und
-Exportformat (`{ version, account, settings, categories, entries }`).
+Exportformat — `CashflowDoc` in `src/core/types.ts`.
 
 - **`normalizeState()` in `model.js` ist der einzige Eingang für fremde Daten.**
   Es lehnt neuere Schemaversionen ab, füllt Defaults, löst verwaiste
@@ -80,7 +91,7 @@ später, muss sein Startsaldo die Buchungen davor enthalten.
 ## Oberfläche
 
 Zustand und Ableitungen liegen ausschließlich in
-`src/app/state/StateProvider.jsx`: `update(mutate)` (auf einer Kopie,
+`src/app/state/StateProvider.tsx` (Typ `Store`): `update(mutate)` (auf einer Kopie,
 speichert), `replace(doc)`, `reset()`, `setView(view)`. Forecast,
 Monatsaggregate und Kennzahlen sind gememoisiert und werden nie gespeichert.
 
