@@ -1,0 +1,160 @@
+{
+  "version": 2,
+  "account": {
+    "name": "Girokonto",
+    "startBalance": 3500,
+    "startDate": "2026-01-01"
+  },
+  "settings": {
+    "view": { "from": "2026-01", "to": "2026-12" }
+  },
+  "categories": [
+    { "id": "cat_gehaelter",     "name": "Gehälter",          "color": "#61b07a", "parentId": null },
+    { "id": "cat_gehalt_1",      "name": "Gehalt 1",          "color": "#4f9e6a", "parentId": "cat_gehaelter" },
+    { "id": "cat_gehalt_2",      "name": "Gehalt 2",          "color": "#86c49b", "parentId": "cat_gehaelter" },
+    { "id": "cat_haus",          "name": "Haus / Wohnung",    "color": "#e07a5f", "parentId": null },
+    { "id": "cat_auto",          "name": "Auto",              "color": "#c9a227", "parentId": null },
+    { "id": "cat_versicherungen","name": "Versicherungen",    "color": "#4f8dd6", "parentId": null },
+    { "id": "cat_nebenkosten",   "name": "Nebenkosten",       "color": "#3fa7a7", "parentId": null },
+    { "id": "cat_telefon",       "name": "Telefon / Internet","color": "#5cbcbc", "parentId": "cat_nebenkosten" },
+    { "id": "cat_strom",         "name": "Strom",             "color": "#2f8f8f", "parentId": "cat_nebenkosten" },
+    { "id": "cat_wasser",        "name": "Wasser",            "color": "#8ad0d0", "parentId": "cat_nebenkosten" },
+    { "id": "cat_hobbies",       "name": "Hobbies",           "color": "#8a6fbf", "parentId": null },
+    { "id": "cat_steuer",        "name": "Steuer",            "color": "#b5544f", "parentId": null },
+    { "id": "cat_haushalt",      "name": "Haushaltsbudget",   "color": "#d6698f", "parentId": null }
+  ],
+  "entries": [
+    {
+      "id": "ent_gehalt_1",
+      "name": "Gehalt 1",
+      "categoryId": "cat_gehalt_1",
+      "direction": "income",
+      "note": "monatlich zum 1.",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "monthly", "dayOfMonth": 1, "interval": 1, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 3000 }]
+    },
+    {
+      "id": "ent_gehalt_2",
+      "name": "Gehalt 2",
+      "categoryId": "cat_gehalt_2",
+      "direction": "income",
+      "note": "monatlich zum 7.",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "monthly", "dayOfMonth": 7, "interval": 1, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 2500 }]
+    },
+    {
+      "id": "ent_miete",
+      "name": "Miete",
+      "categoryId": "cat_haus",
+      "direction": "expense",
+      "note": "monatlich zum 1.",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "monthly", "dayOfMonth": 1, "interval": 1, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 1350 }]
+    },
+    {
+      "id": "ent_tanken",
+      "name": "Tanken & Wartung",
+      "categoryId": "cat_auto",
+      "direction": "expense",
+      "note": "alle 30 Tage — driftet bewusst gegen die Monatstermine",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "everyNDays", "n": 30, "anchor": "2026-01-02", "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 180 }]
+    },
+    {
+      "id": "ent_versicherungen",
+      "name": "Versicherungspaket",
+      "categoryId": "cat_versicherungen",
+      "direction": "expense",
+      "note": "quartalsweise zum 10.",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "quarterly", "monthOffset": 0, "dayOfMonth": 10, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 480 }]
+    },
+    {
+      "id": "ent_telefon",
+      "name": "Telefon & Internet",
+      "categoryId": "cat_telefon",
+      "direction": "expense",
+      "note": "monatlich am Monatsletzten",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "monthly", "dayOfMonth": -1, "interval": 1, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 60 }]
+    },
+    {
+      "id": "ent_strom",
+      "name": "Stromabschlag",
+      "categoryId": "cat_strom",
+      "direction": "expense",
+      "note": "monatlich zum 5., außer im Dezember (Jahresabrechnung)",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "monthly", "dayOfMonth": 5, "interval": 1, "skipMonths": [12], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 120 }]
+    },
+    {
+      "id": "ent_wasser",
+      "name": "Wasser & Abwasser",
+      "categoryId": "cat_wasser",
+      "direction": "expense",
+      "note": "jährlich zum 15. März",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "yearly", "month": 3, "dayOfMonth": 15, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 600 }]
+    },
+    {
+      "id": "ent_hobby",
+      "name": "Sport & Hobby",
+      "categoryId": "cat_hobbies",
+      "direction": "expense",
+      "note": "14-tägig, mittwochs",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "weekly", "weekday": 3, "interval": 2, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 75 }]
+    },
+    {
+      "id": "ent_steuer",
+      "name": "Steuernachzahlung",
+      "categoryId": "cat_steuer",
+      "direction": "expense",
+      "note": "einmalig",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "once", "date": "2026-06-30", "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 3250 }]
+    },
+    {
+      "id": "ent_haushalt",
+      "name": "Wocheneinkauf",
+      "categoryId": "cat_haushalt",
+      "direction": "expense",
+      "note": "wöchentlich, samstags",
+      "active": true,
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "rule": { "type": "weekly", "weekday": 6, "interval": 1, "skipMonths": [], "skipDates": [] },
+      "amounts": [{ "from": null, "value": 725 }]
+    }
+  ]
+}
