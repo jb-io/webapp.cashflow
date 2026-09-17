@@ -60,7 +60,8 @@ Oberfläche genutzt.
 Ein einziges Dokument ist gleichzeitig Zustand, localStorage-Inhalt und
 Exportformat — `CashflowDoc` in `src/core/types.ts`.
 
-- **`normalizeState()` in `model.js` ist der einzige Eingang für fremde Daten.**
+- **`normalizeState()` in `model.ts` ist der einzige Eingang für fremde Daten.**
+  Die Eingabe ist `unknown` — erst am Ende steht fest, dass ein `CashflowDoc` vorliegt.
   Es lehnt neuere Schemaversionen ab, füllt Defaults, löst verwaiste
   Kategorie-Referenzen und Hierarchie-Zyklen auf und migriert ältere Schemata.
   Jeder neue Importweg muss hier durch.
@@ -68,7 +69,7 @@ Exportformat — `CashflowDoc` in `src/core/types.ts`.
   `normalizeState` ergänzen; `loadState()` schreibt migrierte Dokumente sofort
   zurück. Ein geänderter Ablageort kommt in `LEGACY_STORAGE_KEYS`.
 - **Kategorien liegen flach** mit `parentId`; der Baum wird bei Bedarf über
-  `categories.js` berechnet (`flattenTree`, `pathOf`, `descendantIds`,
+  `categories.ts` berechnet (`flattenTree`, `pathOf`, `descendantIds`,
   `canReparent`). Ein Eintrag zeigt immer auf genau eine Kategorie.
 - **Beträge sind Phasen** `[{from, value}]` — `value` wird immer positiv
   gepflegt, das Vorzeichen kommt aus `direction` (`signedAmountAt`).
@@ -78,7 +79,7 @@ Exportformat — `CashflowDoc` in `src/core/types.ts`.
 
 ## Rechenkern
 
-`expandRule()` (`recurrence.js`) übersetzt ein eigenes Regelformat — bewusst
+`expandRule()` (`recurrence.ts`) übersetzt ein eigenes Regelformat — bewusst
 kein RRULE — in Termine: `monthly` (inkl. `dayOfMonth: -1` für Monatsletzter
 und `interval`), `weekly`, `quarterly`, `yearly`, `everyNDays`, `once`, jeweils
 mit `skipMonths`/`skipDates`. Monatliche und wöchentliche Zyklen sind am
@@ -90,6 +91,12 @@ später, muss sein Startsaldo die Buchungen davor enthalten.
 
 ## Oberfläche
 
+Vier Hash-Routen, je eine Seite in `src/app/pages/`: `#/verlauf`,
+`#/buchungen`, `#/kategorien`, `#/konto`. Unbekannte Routen leiten auf den
+Verlauf um. Zwei Bruchstellen im Layout: 900 px (Seitenleiste statt
+Navigationsleiste unten) und 760 px (einzeiliges Zeilenraster, angedockte
+Editoren statt Blatt von unten).
+
 Zustand und Ableitungen liegen ausschließlich in
 `src/app/state/StateProvider.tsx` (Typ `Store`): `update(mutate)` (auf einer Kopie,
 speichert), `replace(doc)`, `reset()`, `setView(view)`. Forecast,
@@ -100,6 +107,8 @@ Zeile ist Text in einem festen Raster, jede veränderliche Angabe ein
 `<button class="tok">`, dessen Klick über `Sheet` einen Editor für genau diesen
 Aspekt öffnet — mobil als Blatt von unten, ab 760 px angedockt am Token.
 `Sheet` hängt in einem Portal am `<body>` und sucht seinen Anker per Selektor.
+Je Token ein Editor in `components/editors/`; was kein Token hat — Laufzeit,
+Notiz, Löschen — sitzt im `DetailsEditor` hinter `⋯`.
 
 **Zwei Fallen, die dieses Projekt schon zweimal getroffen haben:**
 
@@ -115,8 +124,8 @@ Aspekt öffnet — mobil als Blatt von unten, ab 760 px angedockt am Token.
 ## Diagramme
 
 Farben kommen aus denselben CSS-Variablen wie die Oberfläche
-(`charts/theme.js`), der dunkle Modus hat eigene Werte statt gespiegelter.
-`DEFAULT_COLORS` in `model.js` ist eine **geprüfte** Kategorienpalette (A24):
+(`charts/theme.ts`), der dunkle Modus hat eigene Werte statt gespiegelter.
+`DEFAULT_COLORS` in `model.ts` ist eine **geprüfte** Kategorienpalette (A24):
 Reihenfolge nicht umsortieren. Ab neun Reihen wird zu „Übrige" gebündelt statt
 weitergefärbt. Vor Änderungen an Diagrammfarben die Visualisierungs-Richtlinie
 laden und den Palettenprüfer laufen lassen.
@@ -124,7 +133,7 @@ laden und den Palettenprüfer laufen lassen.
 ## Beispieldaten
 
 `public/data/dummy-data.json` ist bewusst Datei statt Code und wird von
-`test/dummyData.test.js` mitgeprüft: vorgegebener Kategoriebaum, jeder
+`test/dummyData.test.ts` mitgeprüft: vorgegebener Kategoriebaum, jeder
 Regeltyp genau einmal, feste Terminzahlen und — die tragende Zusicherung —
 **die Summe aller Ausgaben entspricht 2026 exakt der Summe beider Gehälter**
 (66.000 €, Jahresergebnis 0). Beträge dort nicht ohne Gegenrechnung ändern.
