@@ -7,42 +7,42 @@ Projektsprache ist Deutsch: Bezeichner, Kommentare, UI-Texte und Dokumentation.
 ## Befehle
 
 ```bash
-npm start                                   # Static-Server auf http://localhost:3000
+npm run dev                                 # Vite-Entwicklungsserver, http://localhost:3000
+npm run build                               # Produktionsbau nach dist/
+npm run preview                             # dist/ ausliefern (für Prüfungen im Browser)
 npm test                                    # node:test, findet test/*.test.js selbst
 node --test test/view.test.js               # eine Datei
 node --test --test-name-pattern="Zyklen"    # einzelne Tests über den Namen
 ```
 
-Es gibt keinen Build-Schritt, keinen Bundler, keinen Linter. `node --check <datei>`
-ist die schnellste Syntaxprüfung für eine einzelne Datei.
+`npm test` läuft **ohne Bundler** direkt gegen `src/core` — deshalb darf dort
+kein JSX und kein Vite-spezifischer Import stehen. `node --check <datei>` ist
+die schnellste Syntaxprüfung für eine einzelne `.js`-Datei (nicht für `.jsx`).
 
 ## Pflicht: Architecture.md
 
 `Architecture.md` hält alle Architekturentscheidungen als nummerierte Liste
 (A1, A2, …) mit Begründung und Konsequenz fest und **muss bei jeder
-Architekturänderung im selben Schritt aktualisiert werden**. Vor größeren
-Änderungen zuerst dort nachsehen — mehrere Stellen im Code verweisen auf
-einzelne Entscheidungen ("siehe Architecture.md, A16").
+Architekturänderung im selben Schritt aktualisiert werden**. Abgelöste
+Entscheidungen werden markiert, nicht gelöscht. Mehrere Stellen im Code
+verweisen darauf ("siehe Architecture.md, A20").
 
 ## Aufbau
 
 ```
-server.js      Express, serviert nur public/ und src/ — keine API, kein Server-State
-src/core/      pure Rechenlogik: läuft unverändert im Browser und unter node:test
-public/        UI (Vanilla-ES-Module, kein Framework)
+src/core/      pure Rechenlogik: kein DOM, kein React, kein JSX
+src/app/       React-Oberfläche (Vite, Hash-Routing)
 public/data/   dummy-data.json — Beispieldaten im Import/Export-Format
 test/          node:test, deckt ausschließlich src/core ab
 ```
 
-Der Browser importiert `/src/core/*.js` direkt per `<script type="module">` —
-dieselben Dateien, die die Tests laden. **`src/core` darf deshalb keine DOM-,
-Node- oder Framework-Abhängigkeit bekommen** (A3); es soll den geplanten
-Umstieg auf Vite + React unverändert überleben. Abhängigkeitsrichtung:
-`public/*` → `src/core/*`, nie umgekehrt.
+**Abhängigkeitsrichtung: `src/app` → `src/core`, nie umgekehrt.** Der Kern ist
+bewusst framework-frei; er hat den Umstieg von Vanilla auf React unverändert
+überlebt und soll das beim nächsten Wechsel wieder tun.
 
 Innerhalb von `core`: `dateUtils` ← `recurrence`/`amounts` ← `forecast` ←
 `stats`; `categories` steht daneben und wird von `model` (Validierung) und der
-UI genutzt.
+Oberfläche genutzt.
 
 ## Datenmodell
 
@@ -77,41 +77,38 @@ mit `skipMonths`/`skipDates`. Monatliche und wöchentliche Zyklen sind am
 schneidet erst danach auf das Anzeigefenster zu (A8) — beginnt das Fenster
 später, muss sein Startsaldo die Buchungen davor enthalten.
 
-## UI-Fallstricke
+## Oberfläche
 
-`public/app.js` hält den Zustand und bietet genau vier Änderungswege:
+Zustand und Ableitungen liegen ausschließlich in
+`src/app/state/StateProvider.jsx`: `update(mutate)` (auf einer Kopie,
+speichert), `replace(doc)`, `reset()`, `setView(view)`. Forecast,
+Monatsaggregate und Kennzahlen sind gememoisiert und werden nie gespeichert.
 
-| Aktion | Speichert | Rendert |
-|---|---|---|
-| `update()` | ja | ja — für strukturelle Änderungen |
-| `updateInline()` | ja | **nein** |
-| `replaceState()` | ja | ja — kompletter neuer Datenstand |
-| `resetState()` | nein, löscht | ja + Startdialog |
+**Die Buchungsliste ist eine Token-Liste** (A20), keine Formulartabelle: die
+Zeile ist Text in einem festen Raster, jede veränderliche Angabe ein
+`<button class="tok">`, dessen Klick über `Sheet` einen Editor für genau diesen
+Aspekt öffnet — mobil als Blatt von unten, ab 760 px angedockt am Token.
+`Sheet` hängt in einem Portal am `<body>` und sucht seinen Anker per Selektor.
 
-**`updateInline()` darf nicht rendern (A16).** Das `change` eines Feldes in der
-Liste wird durch den Klick auf das *nächste* Element ausgelöst; ein Vollrender
-tauscht die Liste mitten im Klick aus, der Klick landet dann im Nichts oder in
-einer Nachbarzeile, und die Eingabe geht in die falsche Zeile. Betroffen ist
-nur noch das Umbenennen an Ort und Stelle — alle anderen Editoren der
-Buchungsliste sind Popovers am `<body>` (A20), weshalb die Liste dort frei neu
-rendern darf. Wer ein neues Eingabefeld *in* eine Liste setzt, handelt sich das
-Problem wieder ein.
+**Zwei Fallen, die dieses Projekt schon zweimal getroffen haben:**
 
-**Die Buchungsliste ist eine Token-Liste**, keine Formulartabelle: Textzeile im
-festen Raster, jede Angabe ein `<button class="tok">`, dessen Klick über
-`popover.js` einen Editor für genau diesen Aspekt öffnet. Das Popover findet
-seinen Anker nach einem Neurender über einen Selektor wieder — deshalb ruft
-`render()` in `app.js` am Ende `repositionPopover()`. Popover-Inhalte bauen
-sich nur bei strukturellen Wechseln neu auf (`api.rebuild()`), nie bei jeder
-Wertänderung, sonst verliert das Feld den Fokus.
+1. **Layout darf sich beim Bedienen nicht verschieben** (A25). Verschiebt sich
+   zwischen `mousedown` und `mouseup` etwas unter dem Cursor, entsteht gar kein
+   `click`. Deshalb ist die Detailzeile einer Buchung immer sichtbar und das
+   Umbenennen-Feld maßgleich zum Token gebaut. Wer eine Zeile bei Auswahl oder
+   Hover wachsen lässt, holt sich den Fehler zurück.
+2. **In einem Popover kein Zustand ohne Vergleich setzen.** `Sheet` misst seine
+   Position in `useLayoutEffect`; ohne Abhängigkeitsliste und ohne Vergleich
+   löst jedes Messen ein Neuzeichnen aus, das wieder misst.
 
-`render()` zeichnet nur den aktiven Tab — andere Tabs sind nach einer Änderung
-ohne Render nicht veraltet, weil sie beim Umschalten neu gebaut werden.
+## Diagramme
 
-Dialoge (`#entry-dialog`, `#welcome-dialog`) bleiben im DOM bestehen; Listener
-gehören an den bei jedem Render ersetzten Inhalt, sonst laufen sie sich auf.
-Der Startdialog muss Esc zusätzlich über `close` abfangen — ohne vorherige
-Nutzerinteraktion liefert Chrome `cancel` nicht abbrechbar aus.
+Farben kommen aus denselben CSS-Variablen wie die Oberfläche
+(`charts/theme.js`), der dunkle Modus hat eigene Werte statt gespiegelter.
+`DEFAULT_COLORS` in `model.js` ist eine **geprüfte** Kategorienpalette (A24):
+Reihenfolge nicht umsortieren. Ab neun Reihen wird zu „Übrige" gebündelt statt
+weitergefärbt. Vor Änderungen an Diagrammfarben die Visualisierungs-Richtlinie
+laden und den Palettenprüfer laufen lassen.
 
 ## Beispieldaten
 
@@ -121,12 +118,14 @@ Regeltyp genau einmal, feste Terminzahlen und — die tragende Zusicherung —
 **die Summe aller Ausgaben entspricht 2026 exakt der Summe beider Gehälter**
 (66.000 €, Jahresergebnis 0). Beträge dort nicht ohne Gegenrechnung ändern.
 
-## Prüfen von UI-Änderungen
+## Prüfen von Oberflächenänderungen
 
-`node:test` deckt nur `src/core` ab. DOM-Verhalten (Fokus, Render, Dialoge)
-wird per headless Chrome über das DevTools-Protokoll geprüft — es gibt kein
-E2E-Framework im Projekt. Ablauf: `npm start`, dann Chrome mit
+`node:test` deckt nur `src/core` ab. Für die Oberfläche gibt es kein
+E2E-Framework im Projekt; geprüft wird per headless Chrome über das
+DevTools-Protokoll: `npm run build && npm run preview`, dann Chrome mit
 `--headless=new --remote-debugging-port=9222 --user-data-dir=<tmp>` starten und
 über `Runtime.evaluate` / `Input.dispatch*Event` steuern. Für Fokus- und
-Klickverhalten echte `Input`-Ereignisse verwenden — `dispatchEvent` aus dem
-Seitenkontext umgeht genau die Fehler, um die es dabei geht.
+Klickverhalten **echte `Input`-Ereignisse** verwenden — `dispatchEvent` aus dem
+Seitenkontext umgeht genau die Fehler, um die es dabei geht. Mobil und Desktop
+über `Emulation.setDeviceMetricsOverride` prüfen, den dunklen Modus über
+`Emulation.setEmulatedMedia`.

@@ -13,10 +13,17 @@ export const STORAGE_KEY = 'webapp.cashflow.v1';
 /** Frühere Ablage unter dem alten Projektnamen; wird beim Laden übernommen. */
 export const LEGACY_STORAGE_KEYS = ['accountPlanner.v1'];
 
-/** Palette für neue Kategorien (bewusst gut unterscheidbar). */
+/**
+ * Palette für neue Kategorien, in fester Reihenfolge vergeben.
+ *
+ * Geprüft mit dem Validator der Visualisierungsrichtlinie: Helligkeitsband,
+ * Chroma, Farbfehlsichtigkeits- und Normalsicht-Abstand bestehen in hellem
+ * wie dunklem Modus. Die Reihenfolge deshalb nicht umsortieren; ab der
+ * neunten Kategorie wählt der Anwender selbst.
+ */
 export const DEFAULT_COLORS = [
-  '#4f8dd6', '#e07a5f', '#61b07a', '#c9a227', '#8a6fbf',
-  '#d6698f', '#3fa7a7', '#9c7b5c', '#7a8b99', '#b5544f',
+  '#2a78d6', '#eb6834', '#1baf7a', '#eda100',
+  '#e87ba4', '#008300', '#4a3aa7', '#e34948',
 ];
 
 export function createId(prefix = 'id') {

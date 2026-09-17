@@ -1,6 +1,6 @@
 # Architektur — webapp.cashflow
 
-Stand: 2026-09-16 · Phase: **Prototyp / Click-Dummy**
+Stand: 2026-09-17 · Phase: **React-Frontend auf geprüftem Rechenkern**
 
 Diese Datei hält die tragenden Entscheidungen fest und wird bei jeder
 Architekturänderung mit aktualisiert.
@@ -20,8 +20,8 @@ Nicht-Ziel in dieser Phase: Design, Mehrbenutzerbetrieb, echte Bankanbindung.
 
 | # | Entscheidung | Begründung | Konsequenz |
 |---|---|---|---|
-| A1 | **Express nur als Static-Server**, keine REST-API | Alle Daten liegen im Browser; ein Backend ohne Daten wäre reine Zeremonie | `server.js` ist ~15 Zeilen und kann beim Umstieg entfallen |
-| A2 | **Kein Build-Step**: native ES-Module in Browser und Node | Prototyp bleibt startbar mit `npm start`, dieselben Dateien laufen unter `node --test` | Kein TypeScript, keine JSX; Typinfos als JSDoc |
+| A1 | *(durch A22 abgelöst)* **Express nur als Static-Server**, keine REST-API | Alle Daten liegen im Browser; ein Backend ohne Daten wäre reine Zeremonie | `server.js` ist entfallen — Vite liefert aus |
+| A2 | *(durch A22 abgelöst)* **Kein Build-Step**: native ES-Module in Browser und Node | Trug den Prototyp ohne Werkzeugkette | Gilt weiterhin für `src/core`: dort kein JSX, keine Bundler-Eigenheiten, damit die Tests die Dateien direkt laden |
 | A3 | **`src/core` ist pur** — keine DOM-, Node- oder Framework-Abhängigkeit | Die Rechenlogik ist der wertvolle Teil und soll den geplanten Umstieg auf Vite + React unverändert überleben | UI-Code darf `core` importieren, nie umgekehrt |
 | A4 | **Persistenz in `localStorage`** + JSON-Import/-Export | Kein Server-State, kein Setup; Export hält die Daten portabel und sicherbar | Daten hängen am Browserprofil — Backup ist Nutzeraufgabe |
 | A5 | **Eigenes Regelformat statt RRULE** | „monatlich außer Dezember", Monatsletzter und Betragsphasen lassen sich direkt abbilden *und* in einem Formular pflegen; RRULE hätte einen Übersetzungslayer und eine schwerere UI erzwungen | Eigene Engine inkl. Tests (`src/core/recurrence.js`) |
@@ -35,10 +35,14 @@ Nicht-Ziel in dieser Phase: Design, Mehrbenutzerbetrieb, echte Bankanbindung.
 | A13 | **Inline-Änderungen greifen auf `change`**, nicht auf `input` | Bei `input` würde jeder Tastendruck einen Schreibvorgang auslösen | Übernahme erst beim Verlassen des Feldes bzw. mit Enter — siehe A16 zur Folge daraus |
 | A14 | **Zeiträume sind immer ganze Monate** — gespeichert als Monatsbereich `settings.view = {from, to}` im Dokument, Standard ist das komplette laufende Kalenderjahr | Geplant wird in Monaten, nicht in Tagen; ein angebrochener Monat verzerrt Monatsbalken und Kennzahlen. Im Dokument gilt der Zeitraum für alle Sichten gleichzeitig und übersteht einen Reload; bedient wird er dort, wo er wirkt — im Verlauf-Tab | `windowOf()` übersetzt in ein Tagesfenster (erster bis letzter Monatstag); die UI kennt nur `<input type="month">`. Schemaänderung → **Version 2** |
 | A15 | **Kategorie ebenfalls direkt aus der Liste wählbar** — seit A20 als Token-Popover mit eingerücktem Baum statt als Auswahlfeld in der Zeile | Das Umsortieren vieler Einträge war der einzige verbliebene Grund, den Dialog zu öffnen | Der Dialog bleibt für alles Strukturelle zuständig, die Tabelle deckt die laufende Pflege ab |
-| A16 | *(seit A20 nur noch für das Umbenennen an Ort und Stelle)* **Inline-Änderungen rendern nicht neu** (`updateInline`): sie schreiben und speichern, danach frischt die Sicht nur die abgeleiteten Stellen der betroffenen Zeile auf (`patchRow`) | A10 (Vollrender) ist für Formulare falsch: das `change` einer Zelle wird durch den Klick in die *nächste* Zelle ausgelöst — der Vollrender tauscht die Tabelle dann mitten im Klick aus, der Klick landet im Nichts oder auf einer verschobenen Nachbarzeile, und die Eingabe geht in die falsche Zeile. Bei gleichnamigen Kopien untereinander fällt das als „falsche Zeile bearbeitet" auf | Die Tabelle muss abgeleitete Zellen (Betragsfarbe, Phasenhinweis, Kategoriefarbe/-Tooltip, Aktiv-Graustufe) selbst nachziehen. Andere Tabs sind unkritisch, weil `render()` ohnehin nur den aktiven Tab zeichnet |
+| A16 | *(durch A22 erledigt: React tauscht keine DOM-Knoten aus, die es wiederverwenden kann — an seine Stelle tritt A25)* **Inline-Änderungen rendern nicht neu** (`updateInline`): sie schreiben und speichern, danach frischt die Sicht nur die abgeleiteten Stellen der betroffenen Zeile auf (`patchRow`) | A10 (Vollrender) ist für Formulare falsch: das `change` einer Zelle wird durch den Klick in die *nächste* Zelle ausgelöst — der Vollrender tauscht die Tabelle dann mitten im Klick aus, der Klick landet im Nichts oder auf einer verschobenen Nachbarzeile, und die Eingabe geht in die falsche Zeile. Bei gleichnamigen Kopien untereinander fällt das als „falsche Zeile bearbeitet" auf | Die Tabelle muss abgeleitete Zellen (Betragsfarbe, Phasenhinweis, Kategoriefarbe/-Tooltip, Aktiv-Graustufe) selbst nachziehen. Andere Tabs sind unkritisch, weil `render()` ohnehin nur den aktiven Tab zeichnet |
 | A18 | **Startdialog beim ersten Aufruf** mit drei Wegen: eigene JSON-Datei, leer beginnen, Beispieldaten. Er lässt sich nicht ohne Entscheidung schließen und erscheint nach „Alles zurücksetzen" erneut | Eine leere App erklärt sich nicht von selbst; die drei Wege decken alle Startsituationen ab. „Noch nie benutzt" (`hasStoredState()`) ist etwas anderes als „bewusst leer" — nur Ersteres fragt, und Zurücksetzen stellt genau diesen Ausgangszustand wieder her | Esc muss zusätzlich über das `close`-Ereignis abgefangen werden: ohne vorherige Nutzerinteraktion liefert Chrome `cancel` nicht abbrechbar aus. `resetState()` löscht die Ablage und speichert bewusst **nichts** zurück |
 | A20 | **Buchungsliste als Token-Liste statt Formulartabelle**: die Zeile ist Text in einem Raster mit weglassbaren Zellen, jede veränderliche Angabe ist ein Token, dessen Klick ein Popover mit genau diesem Aspekt öffnet | Die Formulartabelle zeigte 11 × 5 Bedienelemente gleichzeitig — nichts stach hervor. Vor allem aber zwang sie die Wiederholung in eine Spalte, die für jeden Regeltyp andere Parameter bräuchte, weshalb die Regel dort nur *lesbar* war. Ein Token trägt nur das, was die jeweilige Regel hat | Das Popover hängt am `<body>` und findet seinen Anker über einen Selektor wieder; damit liegt der Fokus beim Bearbeiten nie in der Liste, und A16 ist für alle Tokens konstruktiv erledigt statt abgefangen. Preis: eigene Positionierungslogik (`popover.js`) und Angaben, die anklickbar sind, ohne wie ein Eingabefeld auszusehen |
+| A22 | **Frontend auf Vite + React, Navigation über Hash-Routen** (`#/verlauf`, `#/buchungen`, `#/kategorien`, `#/konto`) | Der Prototyp hatte die Grenze des handgeschriebenen Renderns erreicht: Zustand, abgeleitete Werte und DOM von Hand synchron zu halten war die Quelle der meisten Fehler. Hash-Routen brauchen keine Server-Konfiguration — die App läuft aus jedem Verzeichnis und von der Platte | `src/core` wurde **unverändert** übernommen (A3 hat sich ausgezahlt), `src/app` ist neu. Build über `npm run build`; `npm test` prüft weiterhin nur den Kern, ohne Bundler |
+| A23 | **Ein Layout, zwei Ausprägungen**: unter 900 px eine Spalte mit Navigationsleiste unten, darüber feste Seitenleiste; Editoren erscheinen mobil als Blatt von unten, ab 760 px angedockt am Token | Die Daumenzone ist unten, der Blick oben — dieselbe Navigation an beiden Stellen wäre auf einem der beiden Geräte falsch | Zwei Bruchstellen in `styles.css` (900 px Navigation, 760 px Zeilenraster und Editoren); `Sheet` entscheidet zur Laufzeit, ob es andockt |
+| A24 | **Kategoriefarben aus einer geprüften Palette** (`DEFAULT_COLORS`), Diagrammfarben aus denselben CSS-Variablen wie die Oberfläche | Farbabstände sind rechenbar, nicht Geschmackssache: die Vorgängerpalette fiel bei Farbfehlsichtigkeit und beim Normalsicht-Abstand durch. Ab neun Reihen wird gebündelt statt weitergefärbt | Reihenfolge der Palette nicht umsortieren; der dunkle Modus hat eigene Werte statt gespiegelter |
 | A21 | **Tastaturbedienung der Liste**: ↑/↓ Zeile, ←/→ Angabe, Enter öffnet, Esc schließt | In einem Dauerformular ist die Tab-Reihenfolge schon von den Feldern belegt; erst die Token-Liste macht eine sinnvolle Navigation möglich | Enter/Leertaste werden ausdrücklich behandelt, nicht über die native Schaltflächen-Aktivierung |
+| A25 | **Zeilenhöhe darf sich beim Bedienen nicht ändern**: die Detailzeile einer Buchung ist immer sichtbar, nicht erst bei Auswahl | Erscheint sie erst beim Anklicken, verschiebt sie alles darunter — zwischen Drücken und Loslassen wandert das Ziel weg, und der Klick kommt nie an. Dieselbe Klasse von Fehlern wie A16, nur über das Layout statt über den DOM-Austausch | Auch das Feld zum Umbenennen ist maßgleich zum Token gebaut |
 | A19 | **Beispieldaten liegen als JSON im Auslieferungsformat** (`public/data/dummy-data.json`), nicht als Code | Sie laufen damit durch exakt dieselbe Importprüfung wie eine fremde Datei — der Importpfad wird bei jedem Start mitgetestet — und lassen sich ohne Werkzeug bearbeiten | Das Laden ist asynchron (`fetch`); es gibt nur noch eine Quelle für Startdialog und „Beispieldaten laden" im Konto-Tab |
 | A17 | **Kopien bekommen einen eindeutigen Namen** (`Name (Kopie)`, `(Kopie 2)`, …; vorhandene Kopie-Suffixe werden nicht gestapelt) | Zwei identisch benannte Zeilen direkt untereinander sind in einer inline bearbeitbaren Tabelle nicht auseinanderzuhalten | `duplicateEntry(entry, existing)` braucht die vorhandenen Einträge |
 
@@ -63,13 +67,12 @@ public/              UI (Vanilla, ES-Module)
 test/                node:test-Suite gegen src/core
 ```
 
-**Zustandsänderungen** laufen ausschließlich über `public/app.js`:
-`update()` (mutieren, speichern, aktiven Tab neu zeichnen) für strukturelle
-Änderungen, `updateInline()` (mutieren, speichern, **kein** Render) für
-Änderungen aus einem Feld heraus, in dem der Cursor noch steht (A16),
-`replaceState()` für einen komplett neuen Datenstand (Import, Beispieldaten,
-Startdialog) und `resetState()` für das Zurücksetzen auf den Zustand vor dem
-ersten Aufruf.
+**Zustandsänderungen** laufen ausschließlich über `state/StateProvider.jsx`:
+`update(mutate)` arbeitet auf einer Kopie und speichert, `replace(doc)` setzt
+einen komplett neuen Datenstand (Import, Beispieldaten, Startdialog),
+`reset()` löscht die Ablage und fragt erneut, `setView(view)` ändert den
+Zeitraum. Forecast, Monatsaggregate und Kennzahlen sind gememoisiert und
+werden nie gespeichert.
 
 **Abhängigkeitsrichtung:** `public/*` → `src/core/*`. Innerhalb von `core` gilt
 `dateUtils` ← `recurrence`/`amounts` ← `forecast` ← `stats`; `categories` ist
@@ -247,8 +250,10 @@ Terminen, Undo/Redo.
 
 ## 8. Geplanter nächster Schritt
 
-Nach fachlicher Abnahme Umstieg auf **Vite + React + TypeScript**:
-`src/core` wird unverändert übernommen (nur JSDoc → `.ts`-Typen), `public/`
-wird durch Komponenten ersetzt, `server.js` entfällt. A3 und A4 sind genau
-dafür gewählt — an dieser Stelle ist dann A4 erneut zu prüfen, falls die Daten
-geräteübergreifend verfügbar sein sollen.
+Der Umstieg auf Vite + React ist erfolgt (A22); `src/core` wurde dabei nicht
+angefasst. Offen bleiben aus derselben Überlegung:
+
+- **TypeScript**: JSDoc → `.ts` für `src/core`, danach für `src/app`.
+- **A4 erneut prüfen**: sollen die Daten geräteübergreifend verfügbar sein,
+  braucht es eine Ablage außerhalb des Browsers — dann ist auch A1 wieder
+  offen.
